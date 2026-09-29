@@ -1,0 +1,195 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "admins": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false
+      }
+    },
+    "loanRequests": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".indexOn": [
+        "createdAt",
+        "status"
+      ],
+      "$requestId": {
+        ".write": "(auth != null && !data.exists() && newData.child('status').val() === 'SUBMITTED') || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".validate": "$requestId.matches(/^AR-[0-9]{4}-[0-9]{6}$/) && newData.hasChildren(['requestId','borrowerName','businessName','phone','email','requestedAmount','purpose','businessDescription','fundingPlan','status','createdAt','updatedAt','accessTokenHash'])",
+        "requestId": {
+          ".validate": "newData.val() === $requestId"
+        },
+        "borrowerName": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120"
+        },
+        "businessName": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120"
+        },
+        "phone": {
+          ".validate": "newData.isString() && newData.val().matches(/^[0-9+ ()-]{6,30}$/)"
+        },
+        "email": {
+          ".validate": "newData.isString() && newData.val().length <= 254 && newData.val().matches(/^[^@ ]+@[^@ ]+\\.[^@ ]+$/)"
+        },
+        "requestedAmount": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 1000000000000"
+        },
+        "purpose": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 200"
+        },
+        "businessDescription": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 2000"
+        },
+        "fundingPlan": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 2000"
+        },
+        "additionalNotes": {
+          ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 2000"
+        },
+        "status": {
+          ".validate": "newData.isString() && (!data.exists() ? newData.val() === 'SUBMITTED' : ((data.val() === 'SUBMITTED' && newData.val() === 'UNDER_REVIEW') || (data.val() === 'UNDER_REVIEW' && (newData.val() === 'ACCEPTED' || newData.val() === 'REJECTED')) || (data.val() === 'ACCEPTED' && newData.val() === 'CONTACT_REQUIRED') || (data.val() === 'CONTACT_REQUIRED' && newData.val() === 'AGREEMENT') || (data.val() === 'AGREEMENT' && newData.val() === 'FUNDED') || (data.val() === 'FUNDED' && newData.val() === 'ACTIVE') || (data.val() === 'ACTIVE' && newData.val() === 'COMPLETED'))) && (newData.val() !== 'ACCEPTED' || data.val() === 'ACCEPTED' || (root.child('adminChallenges').child(auth.uid).child($requestId).child('verified').val() === true && root.child('adminChallenges').child(auth.uid).child($requestId).child('expiresAt').val() > now))"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber() && newData.val() === now"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber() && newData.val() === now"
+        },
+        "reviewedAt": {
+          ".validate": "newData.isNumber() && newData.val() === now && auth != null && root.child('admins').child(auth.uid).val() === true"
+        },
+        "acceptedAt": {
+          ".validate": "newData.isNumber() && newData.val() === now && auth != null && root.child('admins').child(auth.uid).val() === true"
+        },
+        "rejectedAt": {
+          ".validate": "newData.isNumber() && newData.val() === now && auth != null && root.child('admins').child(auth.uid).val() === true"
+        },
+        "contactedAt": {
+          ".validate": "newData.isNumber() && newData.val() === now && auth != null && root.child('admins').child(auth.uid).val() === true"
+        },
+        "agreementAt": {
+          ".validate": "newData.isNumber() && newData.val() === now && auth != null && root.child('admins').child(auth.uid).val() === true"
+        },
+        "fundedAt": {
+          ".validate": "newData.isNumber() && newData.val() === now && auth != null && root.child('admins').child(auth.uid).val() === true"
+        },
+        "activeAt": {
+          ".validate": "newData.isNumber() && newData.val() === now && auth != null && root.child('admins').child(auth.uid).val() === true"
+        },
+        "completedAt": {
+          ".validate": "newData.isNumber() && newData.val() === now && auth != null && root.child('admins').child(auth.uid).val() === true"
+        },
+        "accessTokenHash": {
+          ".validate": "newData.isString() && newData.val().matches(/^[a-f0-9]{64}$/)"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "publicStatus": {
+      "$key": {
+        ".read": true,
+        ".write": "(auth != null && !data.exists() && newData.child('status').val() === 'SUBMITTED') || (auth != null && root.child('admins').child(auth.uid).val() === true)",
+        ".validate": "$key.matches(/^[a-f0-9]{64}$/) && newData.hasChildren(['requestId','businessName','requestedAmount','createdAt','status','updatedAt'])",
+        "requestId": {
+          ".validate": "newData.isString() && newData.val().matches(/^AR-[0-9]{4}-[0-9]{6}$/)"
+        },
+        "businessName": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120"
+        },
+        "requestedAmount": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 1000000000000"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber() && newData.val() <= now"
+        },
+        "status": {
+          ".validate": "newData.isString() && newData.val().matches(/^(SUBMITTED|UNDER_REVIEW|ACCEPTED|CONTACT_REQUIRED|AGREEMENT|FUNDED|ACTIVE|COMPLETED|REJECTED)$/)"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber() && newData.val() === now"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "internal": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      "loanRequests": {
+        "$requestId": {
+          "internalNotes": {
+            ".validate": "newData.isString() && newData.val().length <= 4000"
+          },
+          "updatedAt": {
+            ".validate": "newData.isNumber() && newData.val() === now"
+          },
+          "updatedBy": {
+            ".validate": "newData.val() === auth.uid"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "auditLogs": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".indexOn": [
+        "requestId"
+      ],
+      "$logId": {
+        ".write": "(auth != null && root.child('admins').child(auth.uid).val() === true) && !data.exists()",
+        ".validate": "newData.hasChildren(['requestId','adminId','action','timestamp'])",
+        "requestId": {
+          ".validate": "newData.isString() && newData.val().matches(/^AR-[0-9]{4}-[0-9]{6}$/)"
+        },
+        "adminId": {
+          ".validate": "newData.val() === auth.uid"
+        },
+        "action": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 50"
+        },
+        "previousStatus": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30"
+        },
+        "newStatus": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30"
+        },
+        "timestamp": {
+          ".validate": "newData.isNumber() && newData.val() === now"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "adminChallenges": {
+      "$uid": {
+        "$requestId": {
+          ".read": "auth != null && auth.uid === $uid && (auth != null && root.child('admins').child(auth.uid).val() === true)",
+          ".write": "auth != null && auth.uid === $uid && (auth != null && root.child('admins').child(auth.uid).val() === true)",
+          ".validate": "newData.hasChildren(['code','expiresAt','attempts','verified'])",
+          "code": {
+            ".validate": "newData.isString() && newData.val().matches(/^AR-[0-9]{4}$/)"
+          },
+          "expiresAt": {
+            ".validate": "newData.isNumber() && newData.val() <= now + 600000"
+          },
+          "attempts": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5"
+          },
+          "verified": {
+            ".validate": "newData.isBoolean()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    }
+  }
+}

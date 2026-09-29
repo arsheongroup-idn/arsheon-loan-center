@@ -1,0 +1,17 @@
+.env
+.env.local
+.env.production
+.env.development
+
+node_modules/
+dist/
+build/
+coverage/
+
+*.log
+
+serviceAccount.json
+service-account.json
+
+*.pem
+*.key
